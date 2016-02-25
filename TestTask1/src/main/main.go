@@ -51,13 +51,21 @@ func addToDeposit(rw http.ResponseWriter, req *http.Request) {
 	decoder := json.NewDecoder(req.Body)
 	var deposit Deposit
 	err := decoder.Decode(&deposit)
-	checkErr(err)
+	code := checkErr(err)
+	if (code != 200){
+		http.Error(rw, "", code);
+		return
+	}
 	if (!isExists(deposit.User)) {
 		insert(database, deposit.User);
 	}
 	s, err1 := database.Query("update client set balance = balance + $1 where id = $2", deposit.Amount, deposit.User);
 	if (s == nil) {
-		checkErr(err1)
+		code := checkErr(err1)
+		if (code != 200){
+			http.Error(rw, "", code);
+			return
+		}
 	}
 }
 
@@ -65,7 +73,11 @@ func transfer(rw http.ResponseWriter, req *http.Request) {
 	decoder := json.NewDecoder(req.Body)
 	var transfer Transfer
 	err := decoder.Decode(&transfer)
-	checkErr(err)
+	code := checkErr(err)
+	if (code != 200){
+		http.Error(rw, "", code);
+		return
+	}
 	if (!isExists(transfer.From)) {
 		insert(database, transfer.From);
 	}
@@ -76,10 +88,18 @@ func transfer(rw http.ResponseWriter, req *http.Request) {
 	if (to != nil) {
 		from, err1 := database.Query("update client set balance = balance - $1 where id = $2", transfer.Amount, transfer.From);
 		if (from == nil) {
-			checkErr(err1)
+			code := checkErr(err1)
+			if (code != 200){
+				http.Error(rw, "", code);
+				return
+			}
 		}
 	}else{
-		checkErr(err1)
+		code := checkErr(err1)
+		if (code != 200){
+			http.Error(rw, "", code);
+			return
+		}
 	}
 }
 
@@ -93,9 +113,17 @@ func withdrawFromDep(rw http.ResponseWriter, req *http.Request) {
 	}
 	res, err1 := database.Query("update client set balance = balance - $1 where id = $2", deposit.Amount, deposit.User);
 	if (res == nil) {
-		checkErr(err1)
+		code := checkErr(err1)
+		if (code != 200){
+			http.Error(rw, "", code);
+			return
+		}
 	}
-	checkErr(err1)
+	code := checkErr(err1)
+	if (code != 200){
+		http.Error(rw, "", code);
+		return
+	}
 }
 
 func isExists(id int) bool {
@@ -117,7 +145,10 @@ func getBalance(rw http.ResponseWriter, req *http.Request) {
 	m, err := json.Marshal(client)
 
 	code := checkErr(err)
-	fmt.Println(code)
+	if (code != 200){
+		http.Error(rw, "", code);
+		return
+	}
 	rw.Write(m)
 }
 
